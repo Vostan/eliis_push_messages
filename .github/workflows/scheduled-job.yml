@@ -2,7 +2,7 @@ name: Scheduled API Task
 
 on:
   schedule:
-    - cron: '0 * * * *' # Every hour
+    - cron: '* * * * *' # Every minute
   workflow_dispatch: # Manual trigger for testing
 
 jobs:
