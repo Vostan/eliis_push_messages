@@ -40,4 +40,3 @@ jobs:
           git add last_message_id.txt
           git commit -m "Update last processed message ID"
           git push
-#comment
