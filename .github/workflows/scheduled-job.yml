@@ -11,7 +11,7 @@ jobs:
   run-script:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repo
+      - name: Checkout code
         uses: actions/checkout@v3
 
       - name: Set up Python
@@ -19,8 +19,10 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Run Python Script
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Run Python script with headers
         env:
           ELIIS_CSRF_TOKEN: ${{ secrets.ELIIS_CSRF_TOKEN }}
-        run: |
-          python3 my_script.py
+        run: python3 my_script.py
