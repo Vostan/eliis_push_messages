@@ -25,4 +25,4 @@ response = requests.get("https://api.eliis.eu/api/common/messages/recent", heade
 
 data = response.json()
 print(data)
-print("Job done:", result.status_code)
+print("Job done:", response.status_code)
