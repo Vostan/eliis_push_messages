@@ -44,5 +44,5 @@ response = client.chat.completions.create(
 )
 
 
-translated_text = response['choices'][0]['message']['content']
+translated_text = response.choices[0].message.content
 print("✅ Translated text:\n", translated_text)
