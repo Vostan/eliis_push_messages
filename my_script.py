@@ -1,6 +1,6 @@
 import os
 import requests
-import openai
+from openai import OpenAI
 
 csrf_token = os.getenv("ELIIS_CSRF_TOKEN")
 
