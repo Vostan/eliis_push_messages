@@ -44,30 +44,40 @@ if latest_id == last_processed_id:
 
 # --- Step 4: Process the new message
 print("🆕 Processing new message:", latest_id)
-print("here do call to telegram and open api")
+
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+response = client.chat.completions.create(
+  model="gpt-3.5-turbo",  # or "gpt-4"
+  messages=[
+    {"role": "system", "content": "You are a helpful translator."},
+    {"role": "user", "content": f"Translate this to English formatted (make it nicely readable for telegram):\n\n{subject}\n\n{body}"}
+  ],
+  temperature=0.7,
+  max_tokens=500
+)
+
+translated_text = response.choices[0].message.content
+
+BOT_TOKEN = os.getenv("BOT_TOKEN")  # Store as GitHub Secret
+CHANNEL_ID = "-1002622203486"  # or use -100<channel_id> for private
+
+url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+payload = {
+  "chat_id": CHANNEL_ID,
+  "text": translated_text,
+  "parse_mode": "HTML"  # or "Markdown"
+}
+
+response = requests.post(url, data=payload)
+print("✅ Telegram status:", response.status_code)
+print(response.text)
 
 with open(LAST_ID_FILE, "w") as f:
   f.write(latest_id)
-
 
 # Get the first (latest) message
 latest = data["messages"][0]
 
 subject = latest["subject"]
 body = latest["body"]
-
-# client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
-# response = client.chat.completions.create(
-#   model="gpt-3.5-turbo",  # or "gpt-4"
-#   messages=[
-#     {"role": "system", "content": "You are a helpful translator."},
-#     {"role": "user", "content": f"Translate this to English formatted (make it nicely readable for telegram):\n\n{subject}\n\n{body}"}
-#   ],
-#   temperature=0.7,
-#   max_tokens=500
-# )
-
-
-# translated_text = response.choices[0].message.content
-# print("✅ Translated text:\n", translated_text)
