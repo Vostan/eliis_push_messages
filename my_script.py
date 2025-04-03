@@ -1,8 +1,17 @@
 import os
 import requests
 from openai import OpenAI
+import json
 
 csrf_token = os.getenv("ELIIS_CSRF_TOKEN")
+
+LAST_ID_FILE = "last_message_id.txt"
+
+if os.path.exists(LAST_ID_FILE):
+  with open(LAST_ID_FILE, "r") as f:
+    last_processed_id = f.read().strip()
+else:
+  last_processed_id = None
 
 headers = {
   'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:137.0) Gecko/20100101 Firefox/137.0',
@@ -25,6 +34,25 @@ headers = {
 response = requests.get("https://api.eliis.eu/api/common/messages/recent", headers=headers)
 
 data = response.json()
+
+latest_message = data["messages"][0]
+latest_id = str(latest_message["id"])
+
+# --- Step 4: Process the new message
+print("🆕 Processing new message:", latest_id)
+
+# Do your translation, Telegram bot logic, etc.
+
+print("here do call to telegram and open api")
+
+with open(LAST_ID_FILE, "w") as f:
+  f.write(latest_id)
+
+# --- Step 3: Skip if already processed
+if latest_id == last_processed_id:
+  print("🔁 Already processed this message. Skipping.")
+  exit()
+
 # Get the first (latest) message
 latest = data["messages"][0]
 
