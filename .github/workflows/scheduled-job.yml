@@ -38,5 +38,5 @@ jobs:
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
           git add last_message_id.txt
-          git commit -m "Update last processed message ID"
+          git commit -m "Update last processed message ID" || true
           git push
