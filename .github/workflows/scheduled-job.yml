@@ -3,6 +3,9 @@ name: Cron Test
 on:
   schedule:
     - cron: '* * * * *' # every minute
+  push:
+    branches:
+      - main
 #  workflow_dispatch: # manual trigger
 
 jobs:
