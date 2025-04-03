@@ -30,4 +30,11 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           ELIIS_CSRF_TOKEN: ${{ secrets.ELIIS_CSRF_TOKEN }}
         run: python3 my_script.py
+      - name: Commit updated message ID
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add last_message_id.txt
+          git commit -m "Update last processed message ID"
+          git push
 #comment
