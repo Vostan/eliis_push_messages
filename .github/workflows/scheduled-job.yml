@@ -24,8 +24,9 @@ jobs:
 
       - name: Install OpenAI client
         run: pip install openai
-        
+
       - name: Run Python script with headers
         env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           ELIIS_CSRF_TOKEN: ${{ secrets.ELIIS_CSRF_TOKEN }}
         run: python3 my_script.py
