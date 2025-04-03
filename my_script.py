@@ -33,7 +33,9 @@ body = latest["body"]
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-response = openai.ChatCompletion.create(
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+response = client.chat.completions.create(
   model="gpt-3.5-turbo",  # or "gpt-4"
   messages=[
     {"role": "system", "content": "You are a helpful translator."},
