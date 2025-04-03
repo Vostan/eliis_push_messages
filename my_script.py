@@ -24,5 +24,11 @@ headers = {
 response = requests.get("https://api.eliis.eu/api/common/messages/recent", headers=headers)
 
 data = response.json()
-print(data)
-print("Job done:", response.status_code)
+# Get the first (latest) message
+latest = data["messages"][0]
+
+subject = latest["subject"]
+body = latest["body"]
+
+print("Subject:", subject)
+print("Body:", body)
