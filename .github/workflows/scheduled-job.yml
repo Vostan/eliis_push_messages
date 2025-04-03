@@ -3,7 +3,7 @@ name: Cron Test
 on:
   schedule:
     - cron: '* * * * *' # every minute
-  workflow_dispatch: # manual trigger
+#  workflow_dispatch: # manual trigger
 
 jobs:
   say-hello:
