@@ -31,18 +31,18 @@ latest = data["messages"][0]
 subject = latest["subject"]
 body = latest["body"]
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+# client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-response = client.chat.completions.create(
-  model="gpt-3.5-turbo",  # or "gpt-4"
-  messages=[
-    {"role": "system", "content": "You are a helpful translator."},
-    {"role": "user", "content": f"Translate this to English formatted (make it nicely readable for telegram):\n\n{subject}\n\n{body}"}
-  ],
-  temperature=0.7,
-  max_tokens=500
-)
+# response = client.chat.completions.create(
+#   model="gpt-3.5-turbo",  # or "gpt-4"
+#   messages=[
+#     {"role": "system", "content": "You are a helpful translator."},
+#     {"role": "user", "content": f"Translate this to English formatted (make it nicely readable for telegram):\n\n{subject}\n\n{body}"}
+#   ],
+#   temperature=0.7,
+#   max_tokens=500
+# )
 
 
-translated_text = response.choices[0].message.content
-print("✅ Translated text:\n", translated_text)
+# translated_text = response.choices[0].message.content
+# print("✅ Translated text:\n", translated_text)
