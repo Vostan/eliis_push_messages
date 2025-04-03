@@ -38,20 +38,17 @@ data = response.json()
 latest_message = data["messages"][0]
 latest_id = str(latest_message["id"])
 
+if latest_id == last_processed_id:
+  print("🔁 Already processed this message. Skipping.")
+  exit()
+
 # --- Step 4: Process the new message
 print("🆕 Processing new message:", latest_id)
-
-# Do your translation, Telegram bot logic, etc.
-
 print("here do call to telegram and open api")
 
 with open(LAST_ID_FILE, "w") as f:
   f.write(latest_id)
 
-# --- Step 3: Skip if already processed
-if latest_id == last_processed_id:
-  print("🔁 Already processed this message. Skipping.")
-  exit()
 
 # Get the first (latest) message
 latest = data["messages"][0]
