@@ -30,7 +30,7 @@ headers = {
   'TE': 'trailers'
 }
 
-# Step 1: Call first API
+# Call eliis
 response = requests.get("https://api.eliis.eu/api/common/messages/recent", headers=headers)
 
 data = response.json()
@@ -42,8 +42,13 @@ if latest_id == last_processed_id:
   print("🔁 Already processed this message. Skipping.")
   exit()
 
-# --- Step 4: Process the new message
+# Process the new message
 print("🆕 Processing new message:", latest_id)
+
+latest = data["messages"][0]
+
+subject = latest["subject"]
+body = latest["body"]
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
@@ -59,8 +64,8 @@ response = client.chat.completions.create(
 
 translated_text = response.choices[0].message.content
 
-BOT_TOKEN = os.getenv("BOT_TOKEN")  # Store as GitHub Secret
-CHANNEL_ID = "-1002622203486"  # or use -100<channel_id> for private
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+CHANNEL_ID = "-1002622203486"
 
 url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
 payload = {
@@ -75,9 +80,3 @@ print(response.text)
 
 with open(LAST_ID_FILE, "w") as f:
   f.write(latest_id)
-
-# Get the first (latest) message
-latest = data["messages"][0]
-
-subject = latest["subject"]
-body = latest["body"]
