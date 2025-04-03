@@ -1,5 +1,6 @@
 import os
 import requests
+import openai
 
 csrf_token = os.getenv("ELIIS_CSRF_TOKEN")
 
@@ -30,5 +31,18 @@ latest = data["messages"][0]
 subject = latest["subject"]
 body = latest["body"]
 
-print("Subject:", subject)
-print("Body:", body)
+openai.api_key = os.getenv("OPENAI_API_KEY")
+
+response = openai.ChatCompletion.create(
+  model="gpt-3.5-turbo",  # or "gpt-4"
+  messages=[
+    {"role": "system", "content": "You are a helpful translator."},
+    {"role": "user", "content": f"Translate this to English formatted:\n\n{subject}\n\n{body}"}
+  ],
+  temperature=0.7,
+  max_tokens=500
+)
+
+
+translated_text = response['choices'][0]['message']['content']
+print("✅ Translated text:\n", translated_text)
