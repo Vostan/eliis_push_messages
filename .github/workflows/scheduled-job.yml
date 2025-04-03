@@ -1,18 +1,26 @@
-name: Cron Test
+name: Scheduled API Task
 
 on:
   schedule:
-    - cron: '* * * * *' # every minute
+    - cron: '* * * * *' # Every minute
   push:
     branches:
       - main
-#  workflow_dispatch: # manual trigger
 
 jobs:
-  say-hello:
+  run-script:
     runs-on: ubuntu-latest
     steps:
-      - name: Say time and trigger source
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Run Python Script
+        env:
+          ELIIS_CSRF_TOKEN: ${{ secrets.ELIIS_CSRF_TOKEN }}
         run: |
-          echo "Current time: $(date)"
-          echo "Triggered by: ${{ github.event_name }}"
+          python3 my_script.py
