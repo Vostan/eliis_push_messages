@@ -7,6 +7,7 @@ runs are not dropped.
 """
 import json
 import os
+import time
 
 import requests
 
@@ -109,9 +110,20 @@ def translate(subject, body_text):
 
 
 def tg_post(endpoint, data=None, files=None):
-    r = requests.post(f"{TELEGRAM_API}/{endpoint}", data=data, files=files, timeout=60)
-    if r.status_code != 200:
-        print(f"  ⚠️  {endpoint} {r.status_code}: {r.text[:300]}")
+    """POST to Telegram, retrying once on 429 with the server-advised backoff."""
+    for attempt in range(3):
+        r = requests.post(f"{TELEGRAM_API}/{endpoint}", data=data, files=files, timeout=60)
+        if r.status_code == 429 and attempt < 2:
+            try:
+                wait = float(r.json().get("parameters", {}).get("retry_after", 2))
+            except Exception:
+                wait = 2
+            print(f"  ⏳ Telegram 429 on {endpoint}; sleeping {wait + 0.5}s before retry")
+            time.sleep(wait + 0.5)
+            continue
+        if r.status_code != 200:
+            print(f"  ⚠️  {endpoint} {r.status_code}: {r.text[:300]}")
+        return r
     return r
 
 

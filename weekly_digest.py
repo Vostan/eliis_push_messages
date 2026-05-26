@@ -18,8 +18,8 @@ TELEGRAM_API_BASE = "https://api.telegram.org"
 MESSAGE_LIMIT = 4096
 
 CHILDREN = [
-    {"id": 280632, "name": "Child 1"},
-    {"id": 293183, "name": "Child 2"},
+    {"id": 280632, "name": "Armen"},
+    {"id": 293183, "name": "Hayk"},
 ]
 
 csrf_token = (os.getenv("ELIIS_CSRF_TOKEN") or "").strip()

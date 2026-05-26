@@ -26,7 +26,6 @@ jobs:
       - name: Run weekly digest
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
           ELIIS_CSRF_TOKEN: ${{ secrets.ELIIS_CSRF_TOKEN }}
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
         run: python3 weekly_digest.py

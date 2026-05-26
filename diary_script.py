@@ -1,5 +1,6 @@
 import os
 import json
+import time
 import requests
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date
@@ -14,8 +15,8 @@ KINDERGARTEN_ID = 383
 
 # Update names to match your children
 CHILDREN = [
-    {"id": 280632, "name": "Child 1"},
-    {"id": 293183, "name": "Child 2"},
+    {"id": 280632, "name": "Armen"},
+    {"id": 293183, "name": "Hayk"},
 ]
 
 LAST_DIARY_IDS_FILE = "last_diary_ids.json"
@@ -65,10 +66,27 @@ def translate(text):
     )
 
 
+def _tg_post(url, data):
+    """POST to a Telegram endpoint, retrying on 429 with the server-advised
+    backoff. Telegram returns retry_after (seconds) in the response body."""
+    for attempt in range(3):
+        resp = requests.post(url, data=data, timeout=60)
+        if resp.status_code == 429 and attempt < 2:
+            try:
+                wait = float(resp.json().get("parameters", {}).get("retry_after", 2))
+            except Exception:
+                wait = 2
+            print(f"  ⏳ Telegram 429; sleeping {wait + 0.5}s before retry")
+            time.sleep(wait + 0.5)
+            continue
+        return resp
+    return resp
+
+
 def send_telegram_message(text):
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
     payload = {"chat_id": CHANNEL_ID, "text": text, "parse_mode": "HTML"}
-    resp = requests.post(url, data=payload)
+    resp = _tg_post(url, payload)
     print("  ✅ sendMessage:", resp.status_code)
     if resp.status_code != 200:
         print("  ⚠️", resp.text)
@@ -84,7 +102,7 @@ def send_telegram_photo(photo_url, caption=""):
         "caption": caption[:1024] if caption else "",
         "parse_mode": "HTML",
     }
-    resp = requests.post(url, data=payload)
+    resp = _tg_post(url, payload)
     print(f"  ✅ sendPhoto: {resp.status_code}")
     if resp.status_code != 200:
         print("  ⚠️", resp.text)
@@ -100,7 +118,7 @@ def send_telegram_video(video_url, caption=""):
         "caption": caption[:1024] if caption else "",
         "parse_mode": "HTML",
     }
-    resp = requests.post(url, data=payload)
+    resp = _tg_post(url, payload)
     print(f"  ✅ sendVideo: {resp.status_code}")
     if resp.status_code != 200:
         print("  ⚠️", resp.text)
@@ -129,7 +147,7 @@ def send_telegram_media_group(media_items, caption=""):
                 m.pop("caption", None)
                 m.pop("parse_mode", None)
         payload = {"chat_id": CHANNEL_ID, "media": json.dumps(batch)}
-        resp = requests.post(url, data=payload)
+        resp = _tg_post(url, payload)
         print(f"  ✅ sendMediaGroup batch {i // 10 + 1}: {resp.status_code}")
         if resp.status_code != 200:
             print("  ⚠️", resp.text)
@@ -235,7 +253,9 @@ for child in CHILDREN:
         photo_urls = [item["url"] for item in media_items if item["type"] == "photo"]
         photo_descs = []
         if photo_urls:
-            with ThreadPoolExecutor(max_workers=min(8, len(photo_urls))) as ex:
+            # Keep concurrency modest — OpenAI's free/tier-1 TPM gets bursty
+            # at 8 parallel vision calls. 3 is a good balance of speed vs. rate-limit safety.
+            with ThreadPoolExecutor(max_workers=min(3, len(photo_urls))) as ex:
                 photo_descs = [d for d in ex.map(describe_image, photo_urls) if d]
 
         if photo_descs:
