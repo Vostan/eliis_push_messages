@@ -1,6 +1,7 @@
 import os
 import json
 import requests
+from concurrent.futures import ThreadPoolExecutor
 from datetime import date
 
 from translator import chat as translate_chat, describe_image, strip_html
@@ -229,12 +230,13 @@ for child in CHILDREN:
 
         # Describe each photo so the album caption summarizes what's in it.
         # Videos skipped — would require frame extraction.
+        # Run in parallel: with ~5-15 photos per entry, sequential calls
+        # dominate wall time. Concurrency cuts it to ~one round-trip.
+        photo_urls = [item["url"] for item in media_items if item["type"] == "photo"]
         photo_descs = []
-        for item in media_items:
-            if item["type"] == "photo":
-                d = describe_image(item["url"])
-                if d:
-                    photo_descs.append(d)
+        if photo_urls:
+            with ThreadPoolExecutor(max_workers=min(8, len(photo_urls))) as ex:
+                photo_descs = [d for d in ex.map(describe_image, photo_urls) if d]
 
         if photo_descs:
             bullets = "\n".join(f"📸 {d}" for d in photo_descs)

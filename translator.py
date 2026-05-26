@@ -91,7 +91,7 @@ def describe_image(url):
                                 "'kid holding crafted bird'."
                             ),
                         },
-                        {"type": "image_url", "image_url": {"url": url}},
+                        {"type": "image_url", "image_url": {"url": url, "detail": "low"}},
                     ],
                 }
             ],
