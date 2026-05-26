@@ -2,7 +2,7 @@ name: Scheduled API Task
 
 on:
   schedule:
-    - cron: '* * * * *' # Every minute
+    - cron: '*/5 * * * *' # Every 5 minutes (GitHub's effective minimum for cron)
   push:
     branches:
       - main

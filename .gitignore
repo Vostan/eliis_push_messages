@@ -1,1 +1,14 @@
-.idea
+.idea/
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Local secrets — never commit
+.env
+.env.local
+
+# Local-only artifacts
+install_check.txt
+pyinfo.txt
+terminal_test.txt
