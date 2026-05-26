@@ -108,8 +108,9 @@ def build_digest(messages, diaries_by_child, date_from, date_to):
             sections.append(f"{name.upper()} DIARY: (no entries this week)")
 
     source = "\n\n========\n\n".join(sections)
+    child_names = ", ".join(diaries_by_child.keys())
 
-    return chat(
+    body = chat(
         messages=[
             {"role": "system", "content": "You are a concise, warm summarizer for parents."},
             {
@@ -117,13 +118,14 @@ def build_digest(messages, diaries_by_child, date_from, date_to):
                 "content": (
                     "Summarize the following Estonian kindergarten communications from the past week "
                     "in English, for a parent reading on Telegram. Format with Telegram-supported HTML "
-                    "only (<b> <i> <u> <s> <code> <a>) — no <p>, <ul>, etc.\n\n"
+                    "only (<b> <i> <u> <s> <code> <a>) — no <p>, <ul>, etc. Do NOT include a top-level "
+                    "heading; that will be added by the caller.\n\n"
                     "Structure:\n"
-                    "1. Bold heading: <b>📰 Weekly digest — {date_from} → {date_to}</b>\n"
-                    "2. <b>📩 From the school</b>: 2–5 bullets of the key inbox messages. "
-                    "Surface deadlines/required actions explicitly (e.g. '⚠️ Submit form by 2 June').\n"
-                    "3. <b>👶 {Child 1 name}</b>: 1–3 bullets recapping their week.\n"
-                    "4. <b>👶 {Child 2 name}</b>: 1–3 bullets recapping their week.\n"
+                    f"1. <b>📩 From the school</b>: 2–5 bullets of the key inbox messages. "
+                    "Surface deadlines/required actions explicitly (e.g. '⚠️ Submit form by 2 June'). "
+                    "Reference the date of each item in parentheses, e.g. '(2026-05-23)'.\n"
+                    f"2. For each child ({child_names}): a <b>👶 Child name</b> section with 1–3 "
+                    "bullets recapping their week. Reference dates in parentheses where useful.\n"
                     "Use • for bullets. Omit a section if it has no content. "
                     "Keep total length under 3500 characters.\n\n"
                     "Source material:\n\n"
@@ -134,6 +136,8 @@ def build_digest(messages, diaries_by_child, date_from, date_to):
         max_tokens=2000,
         temperature=0.5,
     )
+    heading = f"<b>📰 Weekly digest — 📅 {date_from} → {date_to}</b>"
+    return f"{heading}\n\n{body}"
 
 
 def send_telegram(text):

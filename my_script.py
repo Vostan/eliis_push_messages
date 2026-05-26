@@ -224,8 +224,11 @@ def process_message(msg):
     subject = msg.get("subject", "") or ""
     body_text = strip_html(msg.get("body", ""))
     files = msg.get("files") or []
+    date_str = (msg.get("created_at") or "")[:10]
 
     translated = translate(subject, body_text)
+    if date_str:
+        translated = f"📅 <i>{date_str}</i>\n\n{translated}"
 
     if files:
         if len(translated) <= CAPTION_LIMIT:

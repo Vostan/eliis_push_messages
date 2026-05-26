@@ -44,19 +44,18 @@ headers = {
 today = date.today().isoformat()
 
 
-def translate(text, child_name, diary_date):
-    """Translate Estonian diary text to English. Uses OpenAI first,
-    falling back to Gemini if OpenAI fails."""
+def translate(text):
+    """Translate Estonian diary text to English. The caller is responsible
+    for prepending the date / child heading so it's guaranteed to appear."""
     return translate_chat(
         messages=[
-            {"role": "system", "content": "You are a helpful translator."},
+            {"role": "system", "content": "You are a helpful translator. Output only the translated text."},
             {
                 "role": "user",
                 "content": (
-                    f"Translate this kindergarten diary entry to English. "
-                    f"Format it nicely for Telegram. "
-                    f"Start with: 📒 <b>{child_name}</b> — {diary_date}\n\n"
-                    f"Here is the text:\n\n{text}"
+                    "Translate this Estonian kindergarten diary entry to English. "
+                    "Format it nicely for Telegram. Allowed HTML: <b> <i> <u> <s> <code> <a>.\n\n"
+                    f"Text:\n\n{text}"
                 ),
             },
         ],
@@ -218,12 +217,15 @@ for child in CHILDREN:
                 else:
                     media_items.append({"type": "photo", "url": url})
 
-        # Translate text if present
-        translated = ""
+        # Translate text if present. Date + child heading is added by us, not
+        # by the LLM, so it's always present and in the exact expected format.
+        header = f"📒 <b>{child_name}</b> — 📅 {diary_date}"
+        if course:
+            header += f"\n<i>{course}</i>"
         if all_text.strip():
-            translated = translate(all_text.strip(), child_name, diary_date)
+            translated = f"{header}\n\n{translate(all_text.strip())}"
         else:
-            translated = f"📒 <b>{child_name}</b> — {diary_date}\n({course})"
+            translated = header
 
         # Describe each photo so the album caption summarizes what's in it.
         # Videos skipped — would require frame extraction.
