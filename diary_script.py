@@ -1,10 +1,9 @@
 import os
 import json
 import requests
-from io import BytesIO
 from datetime import date
 
-from translator import chat as translate_chat
+from translator import chat as translate_chat, describe_image, strip_html
 
 # ── Config ──────────────────────────────────────────────────────────────────
 csrf_token = os.getenv("ELIIS_CSRF_TOKEN")
@@ -43,17 +42,6 @@ headers = {
 }
 
 today = date.today().isoformat()
-
-
-def strip_html(html_text):
-    """Rough HTML tag stripper for translation input."""
-    import re
-    text = re.sub(r"<br\s*/?>", "\n", html_text)
-    text = re.sub(r"</?p>", "\n", text)
-    text = re.sub(r"<li>", "• ", text)
-    text = re.sub(r"</li>", "\n", text)
-    text = re.sub(r"<[^>]+>", "", text)
-    return text.strip()
 
 
 def translate(text, child_name, diary_date):
@@ -237,9 +225,27 @@ for child in CHILDREN:
         else:
             translated = f"📒 <b>{child_name}</b> — {diary_date}\n({course})"
 
+        # Describe each photo so the album caption summarizes what's in it.
+        # Videos skipped — would require frame extraction.
+        photo_descs = []
+        for item in media_items:
+            if item["type"] == "photo":
+                d = describe_image(item["url"])
+                if d:
+                    photo_descs.append(d)
+
+        if photo_descs:
+            bullets = "\n".join(f"📸 {d}" for d in photo_descs)
+            combined = f"{translated}\n\n{bullets}"
+            # If the bullets push us over Telegram's 1024-char caption limit,
+            # keep the translation and drop the bullets rather than truncating mid-word.
+            caption_text = combined if len(combined) <= 1024 else translated
+        else:
+            caption_text = translated
+
         # Send to Telegram
         if media_items:
-            send_telegram_media_group(media_items, caption=translated)
+            send_telegram_media_group(media_items, caption=caption_text)
         else:
             send_telegram_message(translated)
 

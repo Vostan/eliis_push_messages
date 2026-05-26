@@ -1,0 +1,32 @@
+name: Weekly Digest
+
+on:
+  schedule:
+    - cron: '0 19 * * SUN' # Sunday 19:00 UTC (~21:00 EET)
+  workflow_dispatch: # allow manual trigger from the Actions tab
+
+permissions:
+  contents: read
+
+jobs:
+  digest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests openai
+
+      - name: Run weekly digest
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          ELIIS_CSRF_TOKEN: ${{ secrets.ELIIS_CSRF_TOKEN }}
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+        run: python3 weekly_digest.py

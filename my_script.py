@@ -7,11 +7,10 @@ runs are not dropped.
 """
 import json
 import os
-import re
 
 import requests
 
-from translator import chat as translate_chat
+from translator import chat as translate_chat, strip_html
 
 ELIIS_API = "https://api.eliis.eu/api"
 TELEGRAM_API_BASE = "https://api.telegram.org"
@@ -48,18 +47,6 @@ def save_last_id(msg_id):
         f.write(str(msg_id))
 
 
-def strip_html(html):
-    if not html:
-        return ""
-    text = re.sub(r"<br\s*/?>", "\n", html)
-    text = re.sub(r"</?p[^>]*>", "\n", text)
-    text = re.sub(r"<li[^>]*>", "• ", text)
-    text = re.sub(r"</li>", "\n", text)
-    text = re.sub(r"<[^>]+>", "", text)
-    text = re.sub(r"\n{3,}", "\n\n", text)
-    return text.strip()
-
-
 def fetch_new_messages(last_id):
     """Return all messages with id > last_id, ordered ascending."""
     new_msgs = []
@@ -89,20 +76,36 @@ def fetch_new_messages(last_id):
 
 
 def translate(subject, body_text):
+    """Translate the message and, if there's a deadline/task/required reply,
+    surface it as a one-line action header at the top of the output."""
     prompt = (
-        "Translate this Estonian kindergarten message to English. "
-        "Format it nicely for Telegram. Allowed HTML: <b> <i> <u> <s> <code> <a>. "
+        "You are translating an Estonian kindergarten message to English for a parent's Telegram channel.\n"
+        "Format your reply EXACTLY as follows:\n"
+        "  Line 1: '⚠️ ACTION: <one short line>' — if the message contains a deadline, a required action, "
+        "a question that needs a reply, or anything the parent must do. Otherwise output exactly 'INFO'.\n"
+        "  Line 2: (blank)\n"
+        "  Line 3+: the translation, formatted nicely for Telegram. Allowed HTML: <b> <i> <u> <s> <code> <a>. "
         "Start with the subject as a bold heading on its own line.\n\n"
         f"Subject: {subject}\n\nBody:\n{body_text}"
     )
-    return translate_chat(
+    raw = translate_chat(
         messages=[
-            {"role": "system", "content": "You are a helpful translator. Output only the translated formatted text."},
+            {"role": "system", "content": "Output exactly the format requested. No code fences."},
             {"role": "user", "content": prompt},
         ],
         max_tokens=2000,
         temperature=0.4,
     )
+    head, _, rest = raw.partition("\n\n")
+    head = head.strip()
+    rest = rest.strip()
+    if head.startswith("⚠️ ACTION:") or head.startswith("ACTION:"):
+        action = head if head.startswith("⚠️") else "⚠️ " + head
+        return f"<b>{action}</b>\n\n{rest}" if rest else f"<b>{action}</b>"
+    if head == "INFO":
+        return rest or raw
+    # Model didn't follow format — return raw output as a fallback
+    return raw
 
 
 def tg_post(endpoint, data=None, files=None):

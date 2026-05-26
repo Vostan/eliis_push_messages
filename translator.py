@@ -8,6 +8,7 @@ keeps working when only one of OPENAI_API_KEY / GOOGLE_API_KEY is configured.
 Raises if both attempts fail (or neither is configured).
 """
 import os
+import re
 
 from openai import OpenAI
 
@@ -70,3 +71,47 @@ def chat(messages, max_tokens=2000, temperature=0.4):
         temperature=temperature,
     )
     return resp.choices[0].message.content.strip()
+
+
+def describe_image(url):
+    """Return a short description of an image (3-6 words). Empty string on
+    failure — this is a nice-to-have caption, never blocking."""
+    try:
+        out = chat(
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": (
+                                "Describe this kindergarten photo in 3 to 6 words. "
+                                "Output only the description, no leading or trailing punctuation. "
+                                "Examples: 'children painting at table', 'outdoor snack time', "
+                                "'kid holding crafted bird'."
+                            ),
+                        },
+                        {"type": "image_url", "image_url": {"url": url}},
+                    ],
+                }
+            ],
+            max_tokens=30,
+            temperature=0.3,
+        )
+        return out.strip().rstrip(".").strip()
+    except Exception as e:
+        print(f"  ⚠️  describe_image failed: {type(e).__name__}: {str(e)[:120]}")
+        return ""
+
+
+def strip_html(html):
+    """Convert HTML to plain text suitable for translation input."""
+    if not html:
+        return ""
+    text = re.sub(r"<br\s*/?>", "\n", html)
+    text = re.sub(r"</?p[^>]*>", "\n", text)
+    text = re.sub(r"<li[^>]*>", "• ", text)
+    text = re.sub(r"</li>", "\n", text)
+    text = re.sub(r"<[^>]+>", "", text)
+    text = re.sub(r"\n{3,}", "\n\n", text)
+    return text.strip()
