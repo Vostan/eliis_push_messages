@@ -23,21 +23,32 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: pip install requests
+        run: pip install requests openai
 
-      - name: Install OpenAI client
-        run: pip install openai
-
-      - name: Run Python script with headers
+      - name: Run message script
+        continue-on-error: true
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           ELIIS_CSRF_TOKEN: ${{ secrets.ELIIS_CSRF_TOKEN }}
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
         run: python3 my_script.py
-      - name: Commit updated message ID
+
+      - name: Run diary script
+        continue-on-error: true
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ELIIS_CSRF_TOKEN: ${{ secrets.ELIIS_CSRF_TOKEN }}
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+        run: python3 diary_script.py
+
+      - name: Commit updated state files
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git add last_message_id.txt
-          git commit -m "Update last processed message ID" || true
-          git push
+          git add last_message_id.txt last_diary_ids.json 2>/dev/null || true
+          if ! git diff --cached --quiet; then
+            git commit -m "Update last processed IDs"
+            git push
+          else
+            echo "No state changes to commit."
+          fi

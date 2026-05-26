@@ -173,15 +173,25 @@ for child in CHILDREN:
         continue
 
     last_known_id = last_diary_ids.get(child_key)
-    new_entries = []
 
-    # Collect all diary IDs across all dates to find new ones
+    # No prior state for this child — initialize to the newest visible id
+    # and skip posting. Prevents flooding the channel on first run.
+    if last_known_id is None:
+        max_id = max(
+            (d["id"] for de in entries for d in de.get("diaries", [])),
+            default=None,
+        )
+        if max_id is not None:
+            last_diary_ids[child_key] = str(max_id)
+            print(f"  📍 Initialized last id to {max_id} (no posts sent)")
+        continue
+
+    new_entries = []
     for date_entry in entries:
         diary_date = date_entry["date"]
         for diary in date_entry.get("diaries", []):
             diary_id = diary["id"]
-            # If we have a last known ID, skip entries we've already seen
-            if last_known_id and diary_id <= int(last_known_id):
+            if diary_id <= int(last_known_id):
                 continue
             new_entries.append({"diary": diary, "date": diary_date})
 
@@ -240,5 +250,9 @@ for child in CHILDREN:
     # Save after processing all entries for this child
     with open(LAST_DIARY_IDS_FILE, "w") as f:
         json.dump(last_diary_ids, f)
+
+# Final save — covers the first-run path which `continue`s past the per-child save above.
+with open(LAST_DIARY_IDS_FILE, "w") as f:
+    json.dump(last_diary_ids, f)
 
 print("\n✅ Done.")
