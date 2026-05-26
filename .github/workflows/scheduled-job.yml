@@ -29,6 +29,7 @@ jobs:
         continue-on-error: true
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
           ELIIS_CSRF_TOKEN: ${{ secrets.ELIIS_CSRF_TOKEN }}
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
         run: python3 my_script.py
@@ -37,6 +38,7 @@ jobs:
         continue-on-error: true
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
           ELIIS_CSRF_TOKEN: ${{ secrets.ELIIS_CSRF_TOKEN }}
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
         run: python3 diary_script.py

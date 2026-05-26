@@ -1,9 +1,10 @@
 import os
 import json
 import requests
-from openai import OpenAI
 from io import BytesIO
 from datetime import date
+
+from translator import chat as translate_chat
 
 # ── Config ──────────────────────────────────────────────────────────────────
 csrf_token = os.getenv("ELIIS_CSRF_TOKEN")
@@ -41,7 +42,6 @@ headers = {
     "Sec-Fetch-Site": "same-site",
 }
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 today = date.today().isoformat()
 
 
@@ -57,9 +57,9 @@ def strip_html(html_text):
 
 
 def translate(text, child_name, diary_date):
-    """Translate Estonian diary text to English via OpenAI."""
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
+    """Translate Estonian diary text to English. Uses OpenAI first,
+    falling back to Gemini if OpenAI fails."""
+    return translate_chat(
         messages=[
             {"role": "system", "content": "You are a helpful translator."},
             {
@@ -72,10 +72,9 @@ def translate(text, child_name, diary_date):
                 ),
             },
         ],
-        temperature=0.7,
         max_tokens=800,
+        temperature=0.7,
     )
-    return response.choices[0].message.content
 
 
 def send_telegram_message(text):

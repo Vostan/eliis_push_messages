@@ -10,7 +10,8 @@ import os
 import re
 
 import requests
-from openai import OpenAI
+
+from translator import chat as translate_chat
 
 ELIIS_API = "https://api.eliis.eu/api"
 TELEGRAM_API_BASE = "https://api.telegram.org"
@@ -21,7 +22,6 @@ MESSAGE_LIMIT = 4096
 
 csrf_token = (os.getenv("ELIIS_CSRF_TOKEN") or "").strip()
 bot_token = (os.getenv("BOT_TOKEN") or "").strip()
-openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 TELEGRAM_API = f"{TELEGRAM_API_BASE}/bot{bot_token}"
 
@@ -95,16 +95,14 @@ def translate(subject, body_text):
         "Start with the subject as a bold heading on its own line.\n\n"
         f"Subject: {subject}\n\nBody:\n{body_text}"
     )
-    resp = openai_client.chat.completions.create(
-        model="gpt-4o-mini",
+    return translate_chat(
         messages=[
             {"role": "system", "content": "You are a helpful translator. Output only the translated formatted text."},
             {"role": "user", "content": prompt},
         ],
-        temperature=0.4,
         max_tokens=2000,
+        temperature=0.4,
     )
-    return resp.choices[0].message.content.strip()
 
 
 def tg_post(endpoint, data=None, files=None):
