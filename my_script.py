@@ -96,7 +96,7 @@ def translate(subject, body_text):
         f"Subject: {subject}\n\nBody:\n{body_text}"
     )
     resp = openai_client.chat.completions.create(
-        model="gpt-3.5-turbo",
+        model="gpt-4o-mini",
         messages=[
             {"role": "system", "content": "You are a helpful translator. Output only the translated formatted text."},
             {"role": "user", "content": prompt},

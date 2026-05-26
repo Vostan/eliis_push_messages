@@ -59,7 +59,7 @@ def strip_html(html_text):
 def translate(text, child_name, diary_date):
     """Translate Estonian diary text to English via OpenAI."""
     response = client.chat.completions.create(
-        model="gpt-3.5-turbo",
+        model="gpt-4o-mini",
         messages=[
             {"role": "system", "content": "You are a helpful translator."},
             {
