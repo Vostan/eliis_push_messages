@@ -1,21 +1,7 @@
 .idea/
-.venv/
 venv/
+.venv/
 __pycache__/
 *.pyc
-
-# Local secrets — never commit
 .env
-.env.local
-
-# Local-only artifacts
-install_check.txt
-pyinfo.txt
-terminal_test.txt
-
-# Local research dumps (large; delete when no longer needed)
-all_diary_media.json
-diary_downloads/
-enum_results.txt
-security_probe*
 state.json.tmp
