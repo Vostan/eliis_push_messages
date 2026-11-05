@@ -31,7 +31,7 @@ jobs:
         with:
           python-version: '3.12'
           cache: pip
-      - run: pip install -q requests openai
+      - run: pip install -q -r requirements.txt
       - name: Poll
         id: poll
         continue-on-error: true
