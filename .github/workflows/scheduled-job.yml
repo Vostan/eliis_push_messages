@@ -1,62 +1,55 @@
-name: Scheduled API Task
+name: Poll Eliis
 
 on:
   schedule:
-    - cron: '*/5 * * * *' # Every 5 minutes (GitHub's effective minimum for cron)
+    # GitHub silently drops most ticks of a */5 cron (we observed 4-7 runs/day).
+    # Off-hour minutes fire more reliably. For real 5-10 min latency, trigger
+    # `workflow_dispatch` from an external cron (see README).
+    - cron: '7,22,37,52 * * * *'
+  workflow_dispatch:
+  repository_dispatch:
+    types: [poll]
   push:
-    branches:
-      - main
+    branches: [main]
+    paths-ignore: ['state.json']
+
+# Never run two polls at once: they would double-post and fight over state.json.
+concurrency:
+  group: poll
+  cancel-in-progress: false
 
 permissions:
   contents: write
 
 jobs:
-  run-script:
+  poll:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-
-      - name: Install dependencies
-        run: pip install requests openai
-
-      - name: Run message script
-        id: msg
+          python-version: '3.12'
+          cache: pip
+      - run: pip install -q requests openai
+      - name: Poll
+        id: poll
         continue-on-error: true
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           ELIIS_CSRF_TOKEN: ${{ secrets.ELIIS_CSRF_TOKEN }}
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
-        run: python3 my_script.py
-
-      - name: Run diary script
-        id: diary
-        continue-on-error: true
-        env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          ELIIS_CSRF_TOKEN: ${{ secrets.ELIIS_CSRF_TOKEN }}
-          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
-        run: python3 diary_script.py
-
-      - name: Commit updated state files
+        run: python poll.py
+      - name: Commit state
         run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-          git add last_message_id.txt last_diary_ids.json 2>/dev/null || true
-          if ! git diff --cached --quiet; then
-            git commit -m "Update last processed IDs"
-            git push
-          else
-            echo "No state changes to commit."
-          fi
-
-      - name: Fail if any script errored
-        if: steps.msg.outcome == 'failure' || steps.diary.outcome == 'failure'
-        run: |
-          echo "::error::Script step failed (msg=${{ steps.msg.outcome }}, diary=${{ steps.diary.outcome }})"
-          exit 1
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add state.json
+          if git diff --cached --quiet; then echo "no state change"; exit 0; fi
+          git commit -m "Update state"
+          # another run may have pushed meanwhile; rebase keeps both
+          git pull --rebase -X theirs origin main || true
+          git push
+      - name: Fail if poll failed
+        if: steps.poll.outcome == 'failure'
+        run: exit 1
